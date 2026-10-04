@@ -1,0 +1,7 @@
+build/
+*.xcuserstate
+xcuserdata/
+*.ipa
+*.mobileprovision
+*.p12
+*.work*
