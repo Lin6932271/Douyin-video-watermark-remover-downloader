@@ -6,10 +6,12 @@
 
 | 平台 | 交付 | 验证状态 |
 | --- | --- | --- |
-| Android 10+ | [安装包](dist/shiying-1.0.0.apk)、Java 源码 | 构建 / 签名检查通过，用户反馈手机测试可用 |
+| Android 10+ | [Releases 安装包](https://github.com/Lin6932271/Douyin-video-watermark-remover-downloader/releases/tag/v1.0.0)、Java 源码 | 构建 / 签名检查通过，用户反馈手机测试可用 |
 | iOS 16+ | [Xcode 工程](ios/Shiying.xcodeproj)、SwiftUI 源码 | 解析回归与静态检查通过；未编译、签名或真机测试 |
 
 **[完整使用文档](docs/USAGE.md)** · **[iOS 构建与使用说明](ios/README.md)**
+
+**[直接下载 Android APK](https://github.com/Lin6932271/Douyin-video-watermark-remover-downloader/releases/download/v1.0.0/shiying-1.0.0.apk)**。正式安装包和 `SHA256SUMS.txt` 均位于 Releases 的 Assets 中；仓库 `dist` 目录另保留同一 APK。
 
 > Android APK SHA-256：`d1f55a657a010c9b06efe1f1f3f050158f5f73537ef04dab10548de31839487b`
 

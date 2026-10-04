@@ -8,7 +8,7 @@
 
 适用 Android 10 或更新版本。
 
-1. 下载仓库中的 [shiying-1.0.0.apk](../dist/shiying-1.0.0.apk)。在 GitHub 文件页点击下载按钮，而不是保存网页；也可以下载整个仓库 ZIP 后从 `dist` 文件夹取出 APK。
+1. 打开 [Releases v1.0.0](https://github.com/Lin6932271/Douyin-video-watermark-remover-downloader/releases/tag/v1.0.0)，在 **Assets** 中下载 `shiying-1.0.0.apk`，或 [直接下载 APK](https://github.com/Lin6932271/Douyin-video-watermark-remover-downloader/releases/download/v1.0.0/shiying-1.0.0.apk)。同页 `SHA256SUMS.txt` 提供哈希校验。仓库中的 [APK 副本](../dist/shiying-1.0.0.apk) 与 Release 文件一致。
 2. 将 APK 传到手机打开安装；系统要求时允许当前文件管理器安装应用。安装完成后打开“拾影”。
 3. 在抖音视频中点分享 → 复制链接。支持粘贴包含说明文字的完整分享内容。
 4. 在拾影点击“粘贴” → “解析视频”。也支持从抖音系统分享菜单将文本发送到拾影。
