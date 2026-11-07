@@ -1,0 +1,421 @@
+[
+  {
+    "name": "plain album URL alternatives",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "desc": "album",
+      "images": [
+        {
+          "url_list": [
+            "https://p3-pc-sign.douyinpic.com/first.webp",
+            "https://p9-pc-sign.douyinpic.com/first.jpeg"
+          ]
+        },
+        {
+          "urlList": [
+            "https://p3-pc-sign.douyinpic.com/first.webp?second=1"
+          ]
+        }
+      ]
+    },
+    "kinds": [
+      "image",
+      "image"
+    ]
+  },
+  {
+    "name": "two live photo pairs",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "desc": "album",
+      "images": [
+        {
+          "url_list": [
+            "https://p3-pc-sign.douyinpic.com/first.webp",
+            "https://p9-pc-sign.douyinpic.com/first.jpeg"
+          ],
+          "live_photo_type": 1,
+          "clip_type": 5,
+          "video": {
+            "play_addr_h264": {
+              "url_list": [
+                "https://v3-web.douyinvod.com/live.mp4"
+              ]
+            }
+          }
+        },
+        {
+          "url_list": [
+            "https://p3-pc-sign.douyinpic.com/first.webp",
+            "https://p9-pc-sign.douyinpic.com/first.jpeg"
+          ],
+          "live_photo_type": 1,
+          "clip_type": 5,
+          "video": {
+            "play_addr_h264": {
+              "url_list": [
+                "https://v3-web.douyinvod.com/live.mp4"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "kinds": [
+      "image",
+      "live_video",
+      "image",
+      "live_video"
+    ]
+  },
+  {
+    "name": "gallery takes precedence over slideshow video",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "desc": "album",
+      "images": [
+        {
+          "url_list": [
+            "https://p3-pc-sign.douyinpic.com/first.webp",
+            "https://p9-pc-sign.douyinpic.com/first.jpeg"
+          ]
+        }
+      ],
+      "video": {
+        "play_addr": {
+          "url_list": [
+            "https://v3-web.douyinvod.com/live.mp4"
+          ]
+        }
+      }
+    },
+    "kinds": [
+      "image"
+    ]
+  },
+  {
+    "name": "camelCase live fields",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "desc": "album",
+      "images": [
+        {
+          "urlList": [
+            "https://p3-pc-sign.douyinpic.com/first.webp"
+          ],
+          "video": {
+            "playAddr": [
+              {
+                "src": "https://v3-web.douyinvod.com/live.mp4"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "kinds": [
+      "image",
+      "live_video"
+    ]
+  },
+  {
+    "name": "nested image_post_info",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "image_post_info": {
+        "images": [
+          {
+            "url_list": [
+              "https://p3-pc-sign.douyinpic.com/first.webp",
+              "https://p9-pc-sign.douyinpic.com/first.jpeg"
+            ]
+          }
+        ]
+      }
+    },
+    "kinds": [
+      "image"
+    ]
+  },
+  {
+    "name": "nested imagePostInfo",
+    "target": "7000000000000000001",
+    "data": {
+      "awemeId": "7000000000000000001",
+      "imagePostInfo": {
+        "imageList": [
+          {
+            "url_list": [
+              "https://p3-pc-sign.douyinpic.com/first.webp",
+              "https://p9-pc-sign.douyinpic.com/first.jpeg"
+            ]
+          }
+        ]
+      }
+    },
+    "kinds": [
+      "image"
+    ]
+  },
+  {
+    "name": "animated original before still fallback",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "desc": "album",
+      "images": [
+        {
+          "url_list": [
+            "https://p3-pc-sign.douyinpic.com/first.webp",
+            "https://p9-pc-sign.douyinpic.com/first.jpeg"
+          ],
+          "animated_image": {
+            "url_list": [
+              "https://p3-pc-sign.douyinpic.com/first.gif"
+            ]
+          }
+        }
+      ]
+    },
+    "kinds": [
+      "animation"
+    ]
+  },
+  {
+    "name": "private album",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "desc": "album",
+      "images": [
+        {
+          "url_list": [
+            "https://p3-pc-sign.douyinpic.com/first.webp",
+            "https://p9-pc-sign.douyinpic.com/first.jpeg"
+          ],
+          "live_photo_type": 1,
+          "clip_type": 5,
+          "video": {
+            "play_addr_h264": {
+              "url_list": [
+                "https://v3-web.douyinvod.com/live.mp4"
+              ]
+            }
+          }
+        }
+      ],
+      "status": {
+        "is_private": true
+      }
+    },
+    "kinds": []
+  },
+  {
+    "name": "deleted album",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "desc": "album",
+      "images": [
+        {
+          "url_list": [
+            "https://p3-pc-sign.douyinpic.com/first.webp",
+            "https://p9-pc-sign.douyinpic.com/first.jpeg"
+          ],
+          "live_photo_type": 1,
+          "clip_type": 5,
+          "video": {
+            "play_addr_h264": {
+              "url_list": [
+                "https://v3-web.douyinvod.com/live.mp4"
+              ]
+            }
+          }
+        }
+      ],
+      "status": {
+        "is_delete": true
+      }
+    },
+    "kinds": []
+  },
+  {
+    "name": "different album",
+    "target": "7698040696892707000",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "desc": "album",
+      "images": [
+        {
+          "url_list": [
+            "https://p3-pc-sign.douyinpic.com/first.webp",
+            "https://p9-pc-sign.douyinpic.com/first.jpeg"
+          ],
+          "live_photo_type": 1,
+          "clip_type": 5,
+          "video": {
+            "play_addr_h264": {
+              "url_list": [
+                "https://v3-web.douyinvod.com/live.mp4"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "kinds": []
+  },
+  {
+    "name": "download watermark fields excluded",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "desc": "album",
+      "images": [
+        {
+          "download_url_list": [
+            "https://p3-pc-sign.douyinpic.com/first.webp"
+          ]
+        }
+      ]
+    },
+    "kinds": []
+  },
+  {
+    "name": "unsafe image domain excluded",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "desc": "album",
+      "images": [
+        {
+          "url_list": [
+            "https://evil.invalid/photo.jpg"
+          ]
+        }
+      ]
+    },
+    "kinds": []
+  },
+  {
+    "name": "live marker without stream warns",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "desc": "album",
+      "images": [
+        {
+          "url_list": [
+            "https://p3-pc-sign.douyinpic.com/first.webp",
+            "https://p9-pc-sign.douyinpic.com/first.jpeg"
+          ],
+          "live_photo_type": 1
+        }
+      ]
+    },
+    "kinds": [
+      "image"
+    ],
+    "warning": true
+  },
+  {
+    "name": "image uri is not a video id",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "desc": "album",
+      "images": [
+        {
+          "uri": "abcdefghijkl"
+        }
+      ]
+    },
+    "kinds": []
+  },
+  {
+    "name": "live video URI fallback",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "desc": "album",
+      "images": [
+        {
+          "url_list": [
+            "https://p3-pc-sign.douyinpic.com/first.webp",
+            "https://p9-pc-sign.douyinpic.com/first.jpeg"
+          ],
+          "video": {
+            "play_addr": {
+              "uri": "video_id_123"
+            }
+          }
+        }
+      ]
+    },
+    "kinds": [
+      "image",
+      "live_video"
+    ]
+  },
+  {
+    "name": "wrong identified post does not descend into recommendations",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7698040696892707000",
+      "images": [
+        {
+          "url_list": [
+            "https://p3-pc-sign.douyinpic.com/first.webp",
+            "https://p9-pc-sign.douyinpic.com/first.jpeg"
+          ]
+        }
+      ],
+      "recommendations": [
+        {
+          "aweme_id": "7000000000000000001",
+          "desc": "album",
+          "images": [
+            {
+              "url_list": [
+                "https://p3-pc-sign.douyinpic.com/first.webp",
+                "https://p9-pc-sign.douyinpic.com/first.jpeg"
+              ],
+              "live_photo_type": 1,
+              "clip_type": 5,
+              "video": {
+                "play_addr_h264": {
+                  "url_list": [
+                    "https://v3-web.douyinvod.com/live.mp4"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "kinds": []
+  },
+  {
+    "name": "ordinary video retained",
+    "target": "7000000000000000001",
+    "data": {
+      "aweme_id": "7000000000000000001",
+      "video": {
+        "play_addr": {
+          "url_list": [
+            "https://v3-web.douyinvod.com/live.mp4"
+          ]
+        }
+      }
+    },
+    "kinds": [
+      "video"
+    ]
+  }
+]

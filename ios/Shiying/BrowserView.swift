@@ -21,6 +21,9 @@ final class BrowserController: NSObject, ObservableObject, WKNavigationDelegate,
         configuration.websiteDataStore = .default()
         configuration.allowsInlineMediaPlayback = true
         configuration.mediaTypesRequiringUserActionForPlayback = []
+        if let path = Bundle.main.url(forResource: "inspect-page", withExtension: "js"), let script = try? String(contentsOf: path, encoding: .utf8) {
+            configuration.userContentController.addUserScript(WKUserScript(source: script, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
         webView = WKWebView(frame: .zero, configuration: configuration)
         super.init()
         webView.customUserAgent = WebHeaders.desktopUA

@@ -1,80 +1,69 @@
-# Douyin video watermark remover downloader
+# 拾影 · 抖音媒体保存器 1.2.0
 
-**由 AI（OpenAI Codex）开发。** 用户提出需求并反馈安卓测试可用；AI 完成 Android / iOS 源码、构建脚本、解析测试和文档。本项目不声称所有平台已完成真机验收。
+基于 [Lin6932271/Douyin-video-watermark-remover-downloader](https://github.com/Lin6932271/Douyin-video-watermark-remover-downloader) 的本地增强版。基线提交：`92318e760b19a3718645ef405cf7b4c888ed14b3`。本次修改未推送到 GitHub 或发布到 Releases。
 
-中文名称：**拾影 · 抖音视频保存器**。粘贴抖音分享链接，保存公开播放视频，不额外添加平台下载水印。名称中的 watermark remover 不表示能擦除已经烧入画面的水印。
+**由 OpenAI Codex 开发。** 支持公开作品的视频、图片、动图和实况素材，不添加水印、不重编码，也不是擦除画面内水印的算法。
 
-| 平台 | 交付 | 验证状态 |
-| --- | --- | --- |
-| Android 10+ | [Releases 安装包](https://github.com/Lin6932271/Douyin-video-watermark-remover-downloader/releases/tag/v1.0.0)、Java 源码 | 构建 / 签名检查通过，用户反馈手机测试可用 |
-| iOS 16+ | [Xcode 工程](ios/Shiying.xcodeproj)、SwiftUI 源码 | 解析回归与静态检查通过；未编译、签名或真机测试 |
+## 交付
 
-**[完整使用文档](docs/USAGE.md)** · **[iOS 构建与使用说明](ios/README.md)**
+- Android 10+：`dist/shiying-1.2.0.apk`。包名 `com.aojiao.shiying`，versionCode 120。本次 APK 与仓库原版 APK 的签名证书一致。
+- Android + iOS 完整源码：`dist/shiying-1.2.0-source.zip`。
+- iOS 16+：提供更新后的 Xcode/SwiftUI 源码，**没有 IPA；未做 Swift 类型检查、Xcode 编译、签名或真机测试**。
+- 原始 1.0.0 APK 保留不覆盖；`SHA256SUMS.txt` 给出本次产物的校验值。
 
-**[直接下载 Android APK](https://github.com/Lin6932271/Douyin-video-watermark-remover-downloader/releases/download/v1.0.0/shiying-1.0.0.apk)**。正式安装包和 `SHA256SUMS.txt` 均位于 Releases 的 Assets 中；仓库 `dist` 目录另保留同一 APK。
+## 新增能力
 
-> Android APK SHA-256：`d1f55a657a010c9b06efe1f1f3f050158f5f73537ef04dab10548de31839487b`
+- 图片图集：按原顺序解析，每张图片的多个 CDN 地址视为备用地址，不重复下载。
+- GIF、WebP、PNG/APNG 等图片：按真实文件头决定扩展名和 MIME，原始字节保存，不把动图转成静态 JPG。
+- 实况：保存**同编号的图片和 MP4 动态片段**；不再只抓静态封面或顶层图集配乐视频。
+- Android 支持“全部保存”和“选择素材”；图片写入 `Pictures/拾影/`，视频和实况片段写入 `Movies/拾影/`。
+- 支持 `/video/`、`/note/`、`/share/slides/` 和查询参数形式的作品 ID。
+- 每个文件独立尝试备用地址；部分失败会报告数量和原因；取消时保留已成功的文件，清理当前未完成项。
+- 历史记录按真实 MIME 查看/分享，兼容旧视频记录。
 
-纯 Java 安卓应用，Android 10（API 29）及以上。没有广告、注册、统计 SDK 和自建解析服务器。
+**实况的兼容边界：**图片 + MP4 是完整的两类下载素材，不等于合成为 iPhone 原生 Live Photo 或各 Android 品牌的实况照片。相册能否长按播放取决于相册对该格式的支持，本版不承诺长按播放。平台没下发动态轨时会明确提示，而不是把静态图声称为完整实况。
 
-## 手机使用
+## 使用
 
-1. 安装 `dist/shiying-1.0.0.apk`，启动“拾影”。允许通知后可在通知栏查看后台下载进度；没有通知权限也可在前台下载。
-2. 在抖音复制视频分享链接，把整段分享文字粘贴进应用，点“解析视频”。也可通过系统分享菜单把文字发送到“拾影”。
-3. 直接 HTTP 解析失败时会打开本机内置网页，自动读取播放资源。如果页面要求验证或登录，由你在网页完成；必要时播放视频数秒，再点“读取当前页面”。
-4. 点“保存视频到相册”。文件保存在公共 `Movies/拾影/`，完成后在“最近保存”里播放或分享。
-5. 下载可以在应用内或通知栏取消。失败、取消或不完整下载会删除未完成的相册条目。
+1. 将 APK 传到手机安装。本次不自动安装或操作手机。签名不兼容时不要先卸载旧版，先核对包名与签名。
+2. 复制完整抖音分享文字，粘贴后点“解析作品”。
+3. 查看图片/实况数量，点“保存全部素材到相册”或“选择素材保存…”。
+4. 若需验证/登录，在内置网页自行完成，再点“读取当前页面”。动态图可先在网页播放一下。
+5. 需要新地址时重新解析；不应复用过期的签名 CDN 地址。
 
-## 功能边界
+详见 [使用说明](docs/USAGE.md)、[变更与验收记录](docs/MEDIA_SUPPORT.md)、[iOS 说明](ios/README.md)。
 
-- 优先读取 `play_addr`、H.264 播放地址和网页的真实播放请求，不使用可能带平台水印的 `download_addr`。原文件保存，不重新编码、不添加水印。
-- 作者关闭下载按钮不是客户端的下载门禁：公开可播放的视频只要返回可访问播放资源，会继续尝试保存。平台没有返回播放资源、资源已失效、视频被删除、需访问权限或受加密保护时，明确报错。
-- 这不是画面去水印算法。作者已经烘焙在视频画面中的文字、Logo、剪辑软件水印仍会保留。
-- 当前版本面向单条 MP4 视频；不包含图集、直播、HLS 分段合并、批量下载或自动登录。
-- 内置网页不忽略 TLS 错误、不加载明文 HTTP、不允许文件访问；未暴露 JavaScript 原生桥。
-- Firecrawl 是可选备用解析。仅点击“云端解析设置”并提供自己的 Key 后使用，分享链接会发送给该服务；本机登录 Cookie 不会发送，Key 不写入源码、APK 或文件。未配置 Key 不影响本机解析。
+## 构建与测试
 
-## 已执行验证（2026-10-04）
-
-- 普通分享页缺少播放地址，匿名直调详情接口返回空响应；桌面浏览器执行页面后取得真实详情，且网页资源快照可被应用同一解析器读取。
-- 使用应用同一 HTTP 下载组件从该页面实际播放地址下载 `499253` 字节 MP4；完整音视频解码退出码为 0，时长约 7.23 秒，576×1024、H.264 视频与 AAC 音频。
-- 共 22 项解析回归通过，包含真实 API 响应和真实网页快照；`allow_download=false` 仅使用合成夹具验证没有阻断公共播放资源。
-- 实测视频接口的 `allow_download=true`，不把这条样本冒充“作者关闭下载”实测。
-- APK 构建、ZIP 完整性、zipalign、v3 签名、包名与 SDK 级别已核验。
-- **用户反馈安卓测试可用**；开发端没有直接执行手机操作，也没有逐项真机覆盖 WebView 兼容性、前台服务、相册保存、通知交互和关闭下载的视频。桌面浏览器验证不等于开发端完成手机端全量验收。
-- Firecrawl 未提供 Key，云端备用解析未进行真实服务验收。
-
-## 本机重建
-
-依赖：Windows、Python 3.9+、JDK 17。设置 `JAVA_HOME_17` 指向自己的 JDK 17；构建脚本也包含默认 Eclipse Adoptium 安装目录的回退。
+Windows、Python 3.9+、JDK 17：
 
 ```powershell
-# 在下载或克隆后的项目根目录执行，按自己的安装位置设置 JDK。
 $env:JAVA_HOME_17 = 'C:\Program Files\Eclipse Adoptium\jdk-17.0.17.10-hotspot'
 .\build.ps1 -Setup
-python .\scripts\test.py
+python scripts/test.py
+node ios/tests/parser.test.cjs
+python scripts/package_source.py
 ```
 
-首次构建从 Google 官方 Android 仓库下载 API 35 和 Build Tools 35.0.0，并核对仓库提供的归档哈希；测试使用 Maven Central 的 `org.json:json:20240303`。资源与 Java 源码复制到 ASCII 临时目录构建，避免 Windows 中文路径问题。再次构建复用缓存和签名密钥。
+构建使用 Google 官方 Android API 35 / Build Tools 35.0.0，`setup_tools.py` 核对官方归档 SHA-1；解析测试依赖 Maven Central 的 `org.json:json:20240303`。首次安装工具需联网。可选环境变量：
 
-签名密钥位于 `.build/signing/`，需要后续覆盖安装时保留，不包含在源码 ZIP 中。移除或重建密钥后无法覆盖安装旧签名版本，需先卸载旧包。构建脚本会先保留已有 APK 的 `.work` 副本。
+- `ANDROID_SDK_ROOT`：已有 Android SDK。
+- `SHIYING_JSON_JAR`：已有测试用 JSON JAR。
+- `SHIYING_SIGNING_DIR`：已有签名目录；未设置时使用本项目 `.build/signing/`。不要分享该目录。
 
-源码也包含 Android Studio/Gradle 配置（AGP 8.6.1、建议 Gradle 8.7、JDK 17）；这一路径未执行验收。本次已实测的是上面的独立构建脚本，不依赖本机安装 Gradle。
+源码不包含签名密钥；用新的密钥重建不保证能覆盖旧版。源码 ZIP 不包含工具缓存、网络会话、Cookie、签名 URL 或受管理技能内容。
 
-## 手机验收清单
+## 验证状态
 
-- 冷启动正常；粘贴给定链接并解析；网页需要验证时能由你完成。
-- 正常视频可保存，相册能看到且音视频可播放；画面没有额外添加的抖音下载水印。
-- 一条确实关闭作者下载按钮的视频：网页仍可播放时能否保存。
-- 后台下载、取消、再次下载；取消后相册无残缺文件。
-- 从抖音系统分享菜单发送链接到“拾影”；历史记录播放和分享。
-- 如果失败，请回传手机 Android 版本、WebView 版本、分享链接和应用显示的完整错误。
+- Android APK：编译、签名、zipalign、ZIP 完整性检查。
+- Java 和 iOS 生产 JS 解析器：普通视频、图集、实况、动图、错误作品隔离和文件格式回归。
+- 用户提供的 分享短链（不公开）：当前桌面网络实测解析出 2 张图片 + 2 段实况 MP4；通过应用同一 Java HTTP/格式识别组件下载 4 个文件，长度一致且 FFmpeg 完整解码退出码为 0。
+- **未执行** Android 手机运行和 MediaStore 相册交互验收，由用户自行测试；桌面下载不能证明手机网页或相册行为。
+- iOS：生产 JS 回归、6 个 Swift 文件语法树、工程资源/引用/plist 检查；不等于 iOS 编译成功。
+- Firecrawl 保留原先的可选设计，未进行真实云请求；没有 Key 不影响本机解析。
 
-## 实现参考
+## 不包含的功能
 
-- [Android MediaStore 官方文档](https://developer.android.com/training/data-storage/shared/media)
-- [yt-dlp 官方 Douyin 解析器与播放地址结构](https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/extractor/tiktok.py)
-- [Firecrawl 官方 Java 参数文档](https://docs.firecrawl.dev/agent-source-of-truth/java)
-- [Firecrawl 官方 Scrape API](https://docs.firecrawl.dev/api-reference/endpoint/scrape)
+私密/删除/付费/加密内容不做突破；不处理直播、HLS 分段合并、主页爬取或自动登录。仅保存平台实际返回且可访问的资源，不保证所有作品始终可下载。作者已烧入画面的水印仍保留。
 
-项目不包含任何云技能、提示词、受管理技能缓存或其正文。
+实现参考：[Android MediaStore](https://developer.android.com/training/data-storage/shared/media)。

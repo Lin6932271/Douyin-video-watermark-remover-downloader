@@ -5,14 +5,14 @@ import zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 paths = []
-for folder in ('app', 'scripts', 'tests'):
+for folder in ('app', 'scripts', 'tests', 'docs', 'ios'):
     for p in (ROOT / folder).rglob('*'):
-        if p.is_file() and p.suffix in ('.java', '.xml', '.js', '.gradle', '.py') and '__pycache__' not in p.parts:
+        if p.is_file() and not any(part in ('__pycache__', '.build', 'build', 'dist', '.tools', 'xcuserdata', '.venv') for part in p.parts) and '.work' not in p.name and p.suffix not in ('.pyc', '.zip', '.jks', '.p12', '.mobileprovision'):
             paths.append(p)
-for name in ('README.md', 'build.ps1', 'build.gradle', 'settings.gradle', '.gitignore'):
+for name in ('README.md', 'CHANGELOG.md', 'build.ps1', 'build.gradle', 'settings.gradle', '.gitignore'):
     paths.append(ROOT / name)
 manifest = {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
-out = ROOT / 'dist/shiying-1.0.0-source.zip'
+out = ROOT / 'dist/shiying-1.2.0-source.zip'
 if out.exists():
     import shutil
     shutil.copy2(out, pathlib.Path(str(out) + '.work'))

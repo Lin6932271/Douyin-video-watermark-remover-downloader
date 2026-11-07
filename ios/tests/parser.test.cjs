@@ -71,5 +71,29 @@ if (fs.existsSync(path.join(evidence, 'browser-api-0.json'))) {
   realEvidence = true;
 }
 const report = {passed, realEvidence, scope: 'Production JavaScript parser and inspector, executed in Node; not an iOS build or device test.'};
+const sharedCases = path.join(root, '../tests/media-cases.json');
+const cases = JSON.parse(fs.readFileSync(fs.existsSync(sharedCases) ? sharedCases : path.join(__dirname, 'media-cases.json'), 'utf8'));
+for (const c of cases) test('gallery: ' + c.name, () => {
+  const v = parse(c.data, c.target);
+  const items = v ? (v.items || (v.urls.length ? [{kind:'video',urls:v.urls}] : [])) : [];
+  assert.deepEqual(items.map(x => x.kind), c.kinds);
+  if (c.name.includes('animated original')) assert.equal(items[0].urls.length, 1);
+  if (c.warning) assert.ok(v.warning.length);
+});
+test('mobile slides redirect ID', () => assert.equal(parser.videoID('https://www.iesdouyin.com/share/slides/7000000000000000001/?region=CN'), '7000000000000000001'));
+test('note performance resources are not a replacement for an album', () => {
+  assert.equal(parser.snapshot(JSON.stringify({href:'https://www.douyin.com/note/7000000000000000001', resources:[cdn]}), '7000000000000000001'), 'null');
+});
+// Local-only real sample under evidence/ (never committed); its ID comes from the saved share redirect URL.
+if (fs.existsSync(path.join(evidence, 'user-detail-1.txt')) && fs.existsSync(path.join(evidence, 'user-share-info.json'))) {
+  test('user real live album: two photos and two motions', () => {
+    const realId = parser.videoID(JSON.parse(fs.readFileSync(path.join(evidence, 'user-share-info.json'), 'utf8')).final_url);
+    const v = parse(fs.readFileSync(path.join(evidence, 'user-detail-1.txt'), 'utf8'), realId);
+    assert.deepEqual(v.items.map(x => x.kind), ['image','live_video','image','live_video']);
+  });
+  realEvidence = true;
+}
+report.passed = passed;
+report.realEvidence = realEvidence;
 console.log(JSON.stringify(report));
 if (process.env.REPORT_FILE) fs.writeFileSync(process.env.REPORT_FILE, JSON.stringify(report, null, 2) + '\n');

@@ -59,7 +59,7 @@ def generate():
             'DEBUG_INFORMATION_FORMAT': 'dwarf' if name == 'Debug' else 'dwarf-with-dsym'}))
         target_configs.append(add('target:' + name, isa='XCBuildConfiguration', name=name, buildSettings={
             'ASSETCATALOG_COMPILER_APPICON_NAME': 'AppIcon', 'CODE_SIGN_STYLE': 'Automatic', 'DEVELOPMENT_TEAM': '',
-            'CURRENT_PROJECT_VERSION': '1', 'MARKETING_VERSION': '1.0.0', 'GENERATE_INFOPLIST_FILE': 'NO',
+            'CURRENT_PROJECT_VERSION': '120', 'MARKETING_VERSION': '1.2.0', 'GENERATE_INFOPLIST_FILE': 'NO',
             'INFOPLIST_FILE': 'Shiying/Info.plist', 'IPHONEOS_DEPLOYMENT_TARGET': '16.0',
             'PRODUCT_BUNDLE_IDENTIFIER': 'com.aojiao.shiying.ios', 'PRODUCT_NAME': '$(TARGET_NAME)',
             'SUPPORTED_PLATFORMS': 'iphoneos iphonesimulator', 'SUPPORTS_MACCATALYST': 'NO',

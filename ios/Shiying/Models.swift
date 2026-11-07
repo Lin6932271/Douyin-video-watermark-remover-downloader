@@ -7,6 +7,25 @@ struct VideoInfo: Codable, Identifiable {
     var author: String
     var source: String
     var urls: [String]
+    var items: [MediaItem]?
+    var warning: String?
+    var mediaItems: [MediaItem] {
+        if let items = items, !items.isEmpty { return items }
+        return urls.isEmpty ? [] : [MediaItem(kind: "video", index: 1, urls: urls)]
+    }
+    var summary: String {
+        let images = mediaItems.filter { !$0.isVideo }.count
+        let live = mediaItems.filter { $0.kind == "live_video" }.count
+        return "图片/动图 \(images) · 实况片段 \(live) · 共 \(mediaItems.count) 个文件"
+    }
+}
+
+struct MediaItem: Codable {
+    var kind: String
+    var index: Int
+    var urls: [String]
+    var isVideo: Bool { kind == "video" || kind == "live_video" }
+    var label: String { String(format: "%03d", index) + "_" + kind }
 }
 
 struct SavedVideo: Codable, Identifiable {
@@ -15,6 +34,8 @@ struct SavedVideo: Codable, Identifiable {
     var filename: String
     var created: Date
     var bytes: Int64
+    var mime: String?
+    var isImage: Bool { mime?.hasPrefix("image/") == true }
     var url: URL { DownloadStore.directory.appendingPathComponent(filename) }
 }
 

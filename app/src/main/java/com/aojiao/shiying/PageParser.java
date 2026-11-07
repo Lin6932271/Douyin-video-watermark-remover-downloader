@@ -24,7 +24,7 @@ public final class PageParser {
         String direct = LinkTools.normalizePlayback(snapshot.optString("videoSrc"));
         VideoInfo video = new VideoInfo(); video.id = id; video.title = snapshot.optString("title", "抖音视频");
         if (LinkTools.isMediaUrl(direct)) video.urls.add(direct);
-        if (video.urls.isEmpty()) {
+        if (video.urls.isEmpty() && !href.contains("/note/") && !href.contains("/slides/")) {
             JSONArray resources = snapshot.optJSONArray("resources");
             if (resources != null) for (int i = resources.length() - 1; i >= 0; i--) {
                 String url = LinkTools.normalizePlayback(resources.optString(i));
@@ -65,9 +65,12 @@ public final class PageParser {
             JSONObject object = (JSONObject) node;
             String id = object.optString("aweme_id", object.optString("awemeId", object.optString("itemId", object.optString("id", ""))));
             JSONObject video = object.optJSONObject("video");
-            if (video != null && (!id.isEmpty()) && (expectedId.isEmpty() || expectedId.equals(id))) {
+            JSONArray images = imageArray(object);
+            boolean post = video != null || images != null;
+            if (post && id.matches("[0-9]{10,25}") && (expectedId.isEmpty() || expectedId.equals(id))) {
                 JSONObject status = object.optJSONObject("status");
                 if (status != null && (status.optBoolean("is_delete") || status.optBoolean("is_private"))) return null;
+                if (images != null) return extractImages(object, images, id);
                 VideoInfo info = extractVideo(object, video, id);
                 if (!info.urls.isEmpty()) return info;
             }
@@ -75,7 +78,7 @@ public final class PageParser {
             while (keys.hasNext()) {
                 String key = keys.next();
                 // Never descend into recommendations of a different identified video.
-                if (video != null && !id.isEmpty() && !expectedId.isEmpty() && !expectedId.equals(id)) return null;
+                if (post && !id.isEmpty() && !expectedId.isEmpty() && !expectedId.equals(id)) return null;
                 Object value = object.opt(key);
                 if (value instanceof JSONObject || value instanceof JSONArray) {
                     VideoInfo result = walk(value, expectedId, depth + 1);
@@ -90,6 +93,60 @@ public final class PageParser {
             }
         }
         return null;
+    }
+    private static JSONArray imageArray(JSONObject object) {
+        JSONObject nested = object.optJSONObject("image_post_info");
+        if (nested == null) nested = object.optJSONObject("imagePostInfo");
+        for (JSONObject source : new JSONObject[]{nested, object}) {
+            if (source == null) continue;
+            for (String key : new String[]{"images", "image_list", "imageList", "image_infos", "original_images"}) {
+                JSONArray array = source.optJSONArray(key);
+                if (array != null && array.length() > 0) return array;
+            }
+        }
+        return null;
+    }
+    private static VideoInfo extractImages(JSONObject object, JSONArray images, String id) throws Exception {
+        VideoInfo info = new VideoInfo(); info.id = id;
+        info.title = object.optString("desc", object.optString("title", "抖音图集"));
+        JSONObject author = object.optJSONObject("author");
+        if (author != null) info.author = author.optString("nickname", author.optString("uniqueId"));
+        int missing = 0, missingMotion = 0;
+        for (int i = 0; i < Math.min(1000, images.length()); i++) {
+            Object raw = images.opt(i);
+            JSONObject image = raw instanceof JSONObject ? (JSONObject) raw : new JSONObject().put("url", raw);
+            MediaItem still = new MediaItem(); still.index = i + 1;
+            VideoInfo addresses = new VideoInfo();
+            for (String key : new String[]{"animated_image", "animatedImage", "dynamic_image", "dynamicImage"})
+                addAddress(addresses, image.opt(key), false);
+            if (!addresses.urls.isEmpty()) still.kind = "animation";
+            if (!"animation".equals(still.kind)) {
+                for (String key : new String[]{"origin_image", "originImage", "original_image", "display_image", "displayImage"})
+                    addAddress(addresses, image.opt(key), false);
+                addAddress(addresses, image, false);
+            }
+            still.urls.addAll(addresses.urls);
+            if (!still.urls.isEmpty()) info.items.add(still); else missing++;
+            VideoInfo motion = new VideoInfo();
+            JSONObject live = image.optJSONObject("live_photo");
+            if (live == null) live = image.optJSONObject("livePhoto");
+            for (JSONObject container : new JSONObject[]{image, live}) {
+                if (container == null) continue;
+                JSONObject clip = container.optJSONObject("video");
+                if (clip != null) for (String url : extractVideo(object, clip, id).urls)
+                    if (!motion.urls.contains(url)) motion.urls.add(url);
+                for (String key : new String[]{"video_play_addr", "videoPlayAddr", "play_addr", "playAddr", "playApi"})
+                    addAddress(motion, container.opt(key), true);
+            }
+            if (!motion.urls.isEmpty()) {
+                MediaItem clip = new MediaItem(); clip.kind = "live_video"; clip.index = i + 1;
+                clip.urls.addAll(motion.urls); info.items.add(clip);
+            } else if (image.optInt("live_photo_type") > 0 || image.optInt("clip_type") == 5) missingMotion++;
+        }
+        if (missing > 0) info.warning += missing + " 张图片缺少可用地址。";
+        if (missingMotion > 0) info.warning += missingMotion + " 张实况未返回动态片段；可尝试内置网页重新读取。";
+        if (images.length() > 1000) info.warning += "图集过大，仅读取前 1000 项。";
+        return info.items.isEmpty() ? null : info;
     }
     private static VideoInfo extractVideo(JSONObject object, JSONObject video, String id) throws Exception {
         VideoInfo info = new VideoInfo();
@@ -113,18 +170,22 @@ public final class PageParser {
         return info;
     }
     private static void addAddress(VideoInfo info, Object value) throws Exception {
+        addAddress(info, value, true);
+    }
+    private static void addAddress(VideoInfo info, Object value, boolean allowVideoId) throws Exception {
         if (value instanceof String) { addUrl(info, (String) value); return; }
         if (value instanceof JSONArray) {
             JSONArray array = (JSONArray) value;
-            for (int i = 0; i < array.length(); i++) addAddress(info, array.opt(i));
+            for (int i = 0; i < Math.min(32, array.length()); i++) addAddress(info, array.opt(i), allowVideoId);
         } else if (value instanceof JSONObject) {
             JSONObject address = (JSONObject) value;
             JSONArray urls = address.optJSONArray("url_list");
             if (urls == null) urls = address.optJSONArray("UrlList");
-            if (urls != null) addAddress(info, urls);
-            addAddress(info, address.opt("src"));
-            addAddress(info, address.opt("url"));
-            if ((urls == null || urls.length() == 0) && address.optString("uri").matches("[A-Za-z0-9_-]{8,120}")) {
+            if (urls == null) urls = address.optJSONArray("urlList");
+            if (urls != null) addAddress(info, urls, allowVideoId);
+            addAddress(info, address.opt("src"), allowVideoId);
+            addAddress(info, address.opt("url"), allowVideoId);
+            if (allowVideoId && (urls == null || urls.length() == 0) && address.optString("uri").matches("[A-Za-z0-9_-]{8,120}")) {
                 addUrl(info, "https://aweme.snssdk.com/aweme/v1/play/?video_id=" + address.optString("uri") + "&ratio=1080p&line=0");
             }
         }

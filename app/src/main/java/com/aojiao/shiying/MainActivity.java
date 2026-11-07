@@ -65,7 +65,7 @@ public final class MainActivity extends Activity {
             status.setText(intent.getStringExtra("message"));
             int value = intent.getIntExtra("progress", -1);
             progress.setIndeterminate(value < 0); progress.setProgress(Math.max(0, value));
-            boolean finished = "done".equals(state) || "error".equals(state);
+            boolean finished = "done".equals(state) || "error".equals(state) || "partial".equals(state);
             if (finished) {
                 cancelButton.setVisibility(View.GONE); progress.setVisibility(View.GONE);
                 parseButton.setEnabled(true); downloadButton.setEnabled(video != null);
@@ -112,9 +112,9 @@ public final class MainActivity extends Activity {
             return insets;
         });
         setContentView(scroll);
-        TextView tag = text("SHIYING  /  VIDEO SAVER", 11, ACCENT, true); tag.setLetterSpacing(.12f); root.addView(tag);
+        TextView tag = text("SHIYING  /  MEDIA SAVER  1.2.0", 11, ACCENT, true); tag.setLetterSpacing(.12f); root.addView(tag);
         space(root, 14); root.addView(text("拾影", 38, TEXT, true));
-        root.addView(text("把喜欢的视频，好好留下。", 15, MUTED, false));
+        root.addView(text("视频、图片、动图与实况，好好留下。", 15, MUTED, false));
         LinearLayout form = card(root);
         form.addView(text("01  粘贴分享链接", 17, TEXT, true)); space(form, 10);
         input = new EditText(this); input.setTextColor(TEXT); input.setHintTextColor(MUTED); input.setTextSize(14);
@@ -122,17 +122,19 @@ public final class MainActivity extends Activity {
         input.setGravity(Gravity.TOP); input.setPadding(dp(12), dp(14), dp(12), dp(14)); input.setBackground(background(BG, 12));
         form.addView(input, new LinearLayout.LayoutParams(-1, -2)); space(form, 12);
         LinearLayout actions = new LinearLayout(this);
-        Button paste = button("粘贴", false); parseButton = button("解析视频", true);
+        Button paste = button("粘贴", false); parseButton = button("解析作品", true);
         actions.addView(paste, new LinearLayout.LayoutParams(0, -2, 1));
         LinearLayout.LayoutParams parseParams = new LinearLayout.LayoutParams(0, -2, 2); parseParams.leftMargin = dp(8);
         actions.addView(parseButton, parseParams); form.addView(actions);
         paste.setOnClickListener(v -> paste()); parseButton.setOnClickListener(v -> parse(false));
         resultCard = card(root); resultCard.setVisibility(View.GONE);
-        resultCard.addView(text("02  无水印播放资源", 17, ACCENT, true)); space(resultCard, 10);
+        resultCard.addView(text("02  可保存的媒体资源", 17, ACCENT, true)); space(resultCard, 10);
         resultTitle = text("", 16, TEXT, true); resultCard.addView(resultTitle);
         resultDetail = text("", 13, MUTED, false); resultCard.addView(resultDetail); space(resultCard, 12);
-        downloadButton = button("保存视频到相册", true); resultCard.addView(downloadButton);
+        downloadButton = button("保存全部素材到相册", true); resultCard.addView(downloadButton);
         downloadButton.setOnClickListener(v -> startDownload());
+        Button choose = button("选择素材保存…", false); resultCard.addView(choose);
+        choose.setOnClickListener(v -> chooseMedia());
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal); progress.setProgressTintList(ColorStateList.valueOf(ACCENT));
         progress.setVisibility(View.GONE); LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(-1, dp(4)); progressParams.topMargin = dp(20); root.addView(progress, progressParams);
         status = text("直接解析优先使用本机网络；不需要注册。", 13, MUTED, false);
@@ -180,16 +182,42 @@ public final class MainActivity extends Activity {
     private void finishParse() { parsing = false; parseButton.setEnabled(true); progress.setVisibility(View.GONE); }
     private void showVideo(VideoInfo info) {
         video = info; resultTitle.setText(info.title.isEmpty() ? "抖音视频" : info.title);
-        resultDetail.setText((info.author.isEmpty() ? "" : "作者：" + info.author + "\n") + "视频 ID：" + info.id + "\n可用播放地址：" + info.urls.size());
+        resultDetail.setText((info.author.isEmpty() ? "" : "作者：" + info.author + "\n") + "作品 ID：" + info.id + "\n" + info.summary()
+            + (info.items.isEmpty() ? "" : "\n实况保存为同编号的图片 + MP4，不合成为手机品牌专用实况格式。")
+            + (info.warning.isEmpty() ? "" : "\n" + info.warning));
         resultCard.setVisibility(View.VISIBLE); downloadButton.setEnabled(!DownloadService.running);
-        status.setText("已解析播放资源，点击保存。地址可能过期，失效时重新解析。");
+        status.setText("已解析，可全部保存或选择素材。动图保留原始格式；地址失效时重新解析。");
+    }
+    private void chooseMedia() {
+        if (video == null || DownloadService.running) return;
+        java.util.List<MediaItem> items = video.mediaItems();
+        String[] labels = new String[items.size()]; boolean[] checked = new boolean[items.size()];
+        for (int i = 0; i < items.size(); i++) { labels[i] = items.get(i).label(); checked[i] = true; }
+        AlertDialog dialog = new AlertDialog.Builder(this).setTitle("选择图片 / 动图 / 实况片段")
+            .setMultiChoiceItems(labels, checked, (d, which, selected) -> checked[which] = selected)
+            .setPositiveButton("保存所选", null).setNegativeButton("取消", null).create();
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            try {
+                VideoInfo selected = VideoInfo.fromJson(video.toJson().toString()); selected.items.clear(); selected.urls.clear();
+                for (int i = 0; i < checked.length; i++) if (checked[i]) selected.items.add(items.get(i));
+                if (selected.items.isEmpty()) { status.setText("至少选择一个素材"); return; }
+                dialog.dismiss(); startDownload(selected);
+            } catch (Exception e) { status.setText("选择失败：" + e.getMessage()); }
+        }));
+        dialog.show();
     }
     private void startDownload() {
+        startDownload(video);
+    }
+    private void startDownload(VideoInfo selected) {
         if (video == null || DownloadService.running) return;
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 10);
         try {
-            Intent intent = new Intent(this, DownloadService.class).putExtra("video", video.toJson().toString());
+            try (java.io.OutputStream out = openFileOutput("download-job.json", MODE_PRIVATE)) {
+                out.write(selected.toJson().toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
+            Intent intent = new Intent(this, DownloadService.class);
             startForegroundService(intent); downloadButton.setEnabled(false); parseButton.setEnabled(false);
             progress.setVisibility(View.VISIBLE); progress.setIndeterminate(true); cancelButton.setVisibility(View.VISIBLE);
             status.setText("开始下载；切到后台可从通知栏查看进度。");
@@ -208,6 +236,12 @@ public final class MainActivity extends Activity {
         settings.setMediaPlaybackRequiresUserGesture(false); settings.setUserAgentString(HttpTransport.DESKTOP_UA);
         CookieManager.getInstance().setAcceptCookie(true); CookieManager.getInstance().setAcceptThirdPartyCookies(browser, false);
         browser.setWebViewClient(new WebViewClient() {
+            @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap icon) {
+                if (!LinkTools.isShareUrl(url)) return;
+                try (InputStream in = getAssets().open("inspect-page.js")) {
+                    view.evaluateJavascript(HttpTransport.readText(in, 1024 * 1024), null);
+                } catch (Exception ignored) { }
+            }
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return !LinkTools.isShareUrl(request.getUrl().toString());
             }
@@ -229,8 +263,7 @@ public final class MainActivity extends Activity {
         browserDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
             CookieManager.getInstance().removeAllCookies(success -> { CookieManager.getInstance().flush(); if (browser != null) browser.reload(); });
         });
-        String id = LinkTools.videoId(share);
-        browser.loadUrl(id.isEmpty() ? share : "https://www.douyin.com/video/" + id);
+        browser.loadUrl(share);
     }
     private void pollBrowser(String share, TextView note, WebView expected, int attempt) {
         if (destroyed || browser != expected || browserDialog == null || !browserDialog.isShowing() || attempt >= 20) return;
@@ -271,24 +304,25 @@ public final class MainActivity extends Activity {
         historyList.removeAllViews();
         try {
             JSONArray array = new JSONArray(getSharedPreferences("downloads", MODE_PRIVATE).getString("history", "[]"));
-            if (array.length() == 0) { historyList.addView(text("保存成功的视频会显示在这里。", 13, MUTED, false)); return; }
+            if (array.length() == 0) { historyList.addView(text("保存成功的图片、动图与视频会显示在这里。", 13, MUTED, false)); return; }
             for (int i = 0; i < Math.min(10, array.length()); i++) {
                 JSONObject item = array.getJSONObject(i); Uri uri = Uri.parse(item.getString("uri"));
                 TextView title = text(item.optString("title", "抖音视频"), 14, TEXT, true); title.setMaxLines(2); historyList.addView(title);
                 LinearLayout row = new LinearLayout(this);
-                Button play = button("播放", false), share = button("分享文件", false);
+                String mime = item.optString("mime", "video/mp4");
+                Button play = button(mime.startsWith("image/") ? "查看" : "播放", false), share = button("分享文件", false);
                 row.addView(play, new LinearLayout.LayoutParams(0, -2, 1)); row.addView(share, new LinearLayout.LayoutParams(0, -2, 1)); historyList.addView(row); space(historyList, 12);
-                play.setOnClickListener(v -> mediaIntent(uri, false)); share.setOnClickListener(v -> mediaIntent(uri, true));
+                play.setOnClickListener(v -> mediaIntent(uri, mime, false)); share.setOnClickListener(v -> mediaIntent(uri, mime, true));
             }
         } catch (Exception e) { historyList.addView(text("暂无下载记录", 13, MUTED, false)); }
     }
-    private void mediaIntent(Uri uri, boolean share) {
+    private void mediaIntent(Uri uri, String mime, boolean share) {
         try {
             Intent intent = new Intent(share ? Intent.ACTION_SEND : Intent.ACTION_VIEW);
-            if (share) { intent.setType("video/mp4"); intent.putExtra(Intent.EXTRA_STREAM, uri); }
-            else intent.setDataAndType(uri, "video/mp4");
+            if (share) { intent.setType(mime); intent.putExtra(Intent.EXTRA_STREAM, uri); }
+            else intent.setDataAndType(uri, mime);
             intent.setClipData(ClipData.newRawUri("视频", uri)); intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(Intent.createChooser(intent, share ? "分享视频" : "播放视频"));
+            startActivity(Intent.createChooser(intent, share ? "分享素材" : "打开素材"));
         } catch (Exception e) { status.setText("文件已移除或没有可用播放器：" + e.getMessage()); }
     }
     private void handleIntent(Intent intent) {

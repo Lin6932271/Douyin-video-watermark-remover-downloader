@@ -29,6 +29,7 @@ enum Resolver {
         let session = URLSession(configuration: config, delegate: ShareRedirectGuard(), delegateQueue: nil)
         defer { session.invalidateAndCancel() }
         var request = URLRequest(url: initial)
+        var fallback: VideoInfo?
         request.setValue(WebHeaders.mobileUA, forHTTPHeaderField: "User-Agent")
         do {
             let (data, response) = try await session.data(for: request)
@@ -36,12 +37,31 @@ enum Resolver {
             if let http = response as? HTTPURLResponse, http.statusCode == 200, data.count <= 8 * 1024 * 1024,
                let html = String(data: data, encoding: .utf8), var video = try parser.parse(html, id: id) {
                 video.source = finalURL.absoluteString
-                return Resolution(url: finalURL, id: video.id, video: video)
+                if video.items?.isEmpty != false { return Resolution(url: finalURL, id: video.id, video: video) }
+                fallback = video
             }
         } catch is CancellationError { throw CancellationError() }
           catch { if Task.isCancelled { throw CancellationError() } /* On-device browser is the rendering fallback. */ }
-        if !id.isEmpty { finalURL = URL(string: "https://www.douyin.com/video/\(id)")! }
-        return Resolution(url: finalURL, id: id, video: nil)
+        if !id.isEmpty {
+            let pages = ["https://api.amemv.com/aweme/v1/aweme/detail/?aweme_id=\(id)&aid=6383&device_platform=web&version_code=190500&version_name=19.5.0",
+                         "https://www.iesdouyin.com/share/note/\(id)/", "https://www.iesdouyin.com/share/video/\(id)/"]
+            for page in pages {
+                try Task.checkCancellation()
+                var next = URLRequest(url: URL(string: page)!)
+                next.setValue(WebHeaders.mobileUA, forHTTPHeaderField: "User-Agent")
+                next.setValue("https://www.douyin.com/", forHTTPHeaderField: "Referer")
+                do {
+                    let (data, response) = try await session.data(for: next)
+                    if let http = response as? HTTPURLResponse, http.statusCode == 200, data.count <= 8 * 1024 * 1024,
+                       let text = String(data: data, encoding: .utf8), var info = try parser.parse(text, id: id) {
+                        info.source = finalURL.absoluteString
+                        if info.mediaItems.count >= (fallback?.mediaItems.count ?? 0) { return Resolution(url: finalURL, id: id, video: info) }
+                    }
+                } catch is CancellationError { throw CancellationError() }
+                  catch { if Task.isCancelled { throw CancellationError() } }
+            }
+        }
+        return Resolution(url: finalURL, id: id, video: fallback)
     }
 
     static func cloud(url: URL, id: String, apiKey: String) async throws -> VideoInfo {

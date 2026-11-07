@@ -1,6 +1,7 @@
 import SwiftUI
 import AVKit
 import UIKit
+import QuickLook
 
 @MainActor
 final class MainModel: ObservableObject {
@@ -92,7 +93,7 @@ struct MainView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 8) {
                         Label("拾影", systemImage: "arrow.down.circle.fill").font(.largeTitle.bold()).foregroundStyle(accent)
-                        Text("粘贴分享链接，把视频留在手机里").foregroundStyle(.secondary)
+                        Text("保存视频、图片、动图与实况素材").foregroundStyle(.secondary)
                     }.padding(.top, 12)
                     VStack(alignment: .leading, spacing: 12) {
                         Text("抖音分享链接").font(.headline)
@@ -107,7 +108,7 @@ struct MainView: View {
                                 ProgressView()
                                 Button("取消") { model.cancel() }
                             } else {
-                                Button("解析视频") { model.resolve() }.buttonStyle(.borderedProminent)
+                                Button("解析作品") { model.resolve() }.buttonStyle(.borderedProminent)
                                     .disabled(model.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || downloads.downloading)
                             }
                         }
@@ -122,8 +123,10 @@ struct MainView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(info.title).font(.headline).lineLimit(4)
                             if !info.author.isEmpty { Text("作者：\(info.author)").font(.subheadline).foregroundStyle(.secondary) }
-                            Text("视频 ID：\(info.id)").font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
-                            Button { downloads.download(info, cookies: model.cookies) } label: { Label("下载原播放视频", systemImage: "arrow.down.to.line") }
+                            Text("作品 ID：\(info.id)\n\(info.summary)").font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+                            if let warning = info.warning, !warning.isEmpty { Text(warning).font(.caption).foregroundStyle(.orange) }
+                            Text("实况保存为同编号图片 + MP4，并非原生 Live Photo。动图不转码；系统相册不支持的格式可分享至文件。").font(.caption).foregroundStyle(.secondary)
+                            Button { downloads.download(info, cookies: model.cookies) } label: { Label("下载全部素材", systemImage: "arrow.down.to.line") }
                                 .buttonStyle(.borderedProminent).disabled(downloads.downloading || model.resolving)
                         }.padding().frame(maxWidth: .infinity, alignment: .leading).background(cardBackground).cornerRadius(18)
                     }
@@ -139,10 +142,11 @@ struct MainView: View {
                     ForEach(downloads.history) { entry in
                         VStack(alignment: .leading, spacing: 10) {
                             Text(entry.video.title).font(.headline).lineLimit(2)
+                            Text(entry.filename).font(.caption).foregroundStyle(.secondary)
                             Text("\(ByteCountFormatter.string(fromByteCount: entry.bytes, countStyle: .file)) · \(entry.created.formatted(date: .abbreviated, time: .shortened))")
                                 .font(.caption).foregroundStyle(.secondary)
                             HStack {
-                                Button("播放") { player = entry }
+                                Button(entry.isImage ? "查看" : "播放") { player = entry }
                                 Button(saving.contains(entry.id) ? "保存中…" : "存入相册") {
                                     saving.insert(entry.id)
                                     Task { @MainActor in
@@ -178,7 +182,7 @@ struct MainView: View {
                 }.navigationTitle("云解析设置").toolbar { ToolbarItem(placement: .navigationBarTrailing) { Button("关闭") { model.showCloud = false } } }
             }
         }
-        .sheet(item: $player) { entry in PlaybackView(url: entry.url) }
+        .sheet(item: $player) { entry in MediaPreview(url: entry.url) }
         .sheet(item: $share) { item in ShareSheet(url: item.url) }
         .alert("操作结果", isPresented: Binding(get: { model.errorMessage != nil || downloads.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil; downloads.errorMessage = nil } })) {
             Button("确定", role: .cancel) { model.errorMessage = nil; downloads.errorMessage = nil }
@@ -191,6 +195,21 @@ struct MainView: View {
         }
     }
     private var cardBackground: Color { Color(red: 0.09, green: 0.13, blue: 0.19) }
+}
+
+struct MediaPreview: UIViewControllerRepresentable {
+    let url: URL
+    func makeCoordinator() -> Coordinator { Coordinator(url: url) }
+    func makeUIViewController(context: Context) -> QLPreviewController {
+        let controller = QLPreviewController(); controller.dataSource = context.coordinator; return controller
+    }
+    func updateUIViewController(_ controller: QLPreviewController, context: Context) {}
+    final class Coordinator: NSObject, QLPreviewControllerDataSource {
+        let url: URL
+        init(url: URL) { self.url = url }
+        func numberOfPreviewItems(in controller: QLPreviewController) -> Int { 1 }
+        func previewController(_ controller: QLPreviewController, previewItemAt index: Int) -> QLPreviewItem { url as NSURL }
+    }
 }
 
 @MainActor

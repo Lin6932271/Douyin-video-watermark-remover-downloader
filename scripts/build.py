@@ -17,7 +17,7 @@ JAVA_HOME = pathlib.Path(os.environ.get('JAVA_HOME_17', r'C:\Program Files\Eclip
 JAVA = JAVA_HOME / 'bin/java.exe'
 JAVAC = JAVA_HOME / 'bin/javac.exe'
 DIST = ROOT / 'dist'
-KEYS = ROOT / '.build/signing'
+KEYS = pathlib.Path(os.environ.get('SHIYING_SIGNING_DIR', ROOT / '.build/signing'))
 DIST.mkdir(exist_ok=True)
 KEYS.mkdir(parents=True, exist_ok=True)
 STAGE = pathlib.Path(tempfile.mkdtemp(prefix='shiying-build-', dir=os.environ.get('TEMP')))
@@ -38,7 +38,7 @@ ANDROID = STAGE / 'android.jar'
 (STAGE / 'dex').mkdir()
 run([BT / 'aapt2.exe', 'compile', '--dir', STAGE / 'main/res', '-o', STAGE / 'resources.zip'])
 run([BT / 'aapt2.exe', 'link', '-I', ANDROID, '--manifest', STAGE / 'main/AndroidManifest.xml',
-     '--java', STAGE / 'generated', '--version-code', '1', '--version-name', '1.0.0',
+     '--java', STAGE / 'generated', '--version-code', '120', '--version-name', '1.2.0',
      '-A', STAGE / 'main/assets', '-o', STAGE / 'unsigned.apk', STAGE / 'resources.zip'])
 sources = sorted((STAGE / 'main/java').rglob('*.java')) + sorted((STAGE / 'generated').rglob('*.java'))
 args = ['-encoding', 'UTF-8', '-source', '8', '-target', '8', '-classpath', str(ANDROID), '-d', str(STAGE / 'classes')]
@@ -62,8 +62,8 @@ if not keystore.exists():
     run([JAVA_HOME / 'bin/keytool.exe', '-genkeypair', '-keystore', keystore, '-storepass:file', password_file,
          '-keypass:file', password_file, '-alias', 'shiying', '-keyalg', 'RSA', '-keysize', '2048', '-validity', '10000',
          '-dname', 'CN=Shiying Local Build,OU=Development,O=aojiao,L=Local,ST=Local,C=CN'])
-apk = DIST / 'shiying-1.0.0.apk'
-if apk.exists(): shutil.copy2(apk, DIST / 'shiying-1.0.0.apk.work')
+apk = DIST / 'shiying-1.2.0.apk'
+if apk.exists(): shutil.copy2(apk, DIST / 'shiying-1.2.0.apk.work')
 run([JAVA, '-jar', BT / 'lib/apksigner.jar', 'sign', '--ks', keystore, '--ks-key-alias', 'shiying',
      '--ks-pass', 'file:' + str(password_file), '--out', apk, STAGE / 'aligned.apk'])
 run([JAVA, '-jar', BT / 'lib/apksigner.jar', 'verify', '--verbose', '--print-certs', apk])

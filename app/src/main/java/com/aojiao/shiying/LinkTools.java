@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 public final class LinkTools {
     private static final Pattern URL = Pattern.compile("https?://[^\\s<>\"'，。！？；（）【】]+", Pattern.CASE_INSENSITIVE);
-    private static final Pattern ID = Pattern.compile("/(?:share/)?(?:video|note)/(\\d{10,25})");
+    private static final Pattern ID = Pattern.compile("/(?:share/)?(?:video|note|slides)/(\\d{10,25})(?:[/?#]|$)");
     private LinkTools() {}
     private static boolean hostIn(String host, String[] domains) {
         if (host == null) return false;
@@ -30,8 +30,9 @@ public final class LinkTools {
         try {
             URI uri = URI.create(value);
             return safe(uri) && hostIn(uri.getHost(), new String[]{"douyinvod.com", "douyin.com", "iesdouyin.com",
-                "amemv.com", "snssdk.com", "bytecdn.cn", "bytecdn.com", "bytedance.com", "zijieapi.com", "pstatp.com", "bytedance.net"})
-                && !value.contains(".m3u8") && !value.contains("/playwm/");
+                "amemv.com", "snssdk.com", "bytecdn.cn", "bytecdn.com", "bytedance.com", "zijieapi.com", "pstatp.com", "bytedance.net",
+                "douyinpic.com", "byteimg.com", "ibytedtos.com"})
+                && !value.toLowerCase(Locale.ROOT).contains(".m3u8") && !value.contains("/playwm/");
         } catch (Exception e) { return false; }
     }
     public static String extract(String text) {
@@ -48,7 +49,7 @@ public final class LinkTools {
         if (value == null) return "";
         Matcher matcher = ID.matcher(value);
         if (matcher.find()) return matcher.group(1);
-        matcher = Pattern.compile("(?:[?&])(?:modal_id|aweme_id|item_ids)=(\\d{10,25})").matcher(value);
+        matcher = Pattern.compile("(?:[?&])(?:modal_id|aweme_id|item_ids)=(\\d{10,25})(?:[&#]|$)").matcher(value);
         return matcher.find() ? matcher.group(1) : "";
     }
     public static String decodeData(String value) throws Exception {

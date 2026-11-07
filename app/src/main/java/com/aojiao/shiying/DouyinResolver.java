@@ -15,23 +15,40 @@ public final class DouyinResolver {
     public DouyinResolver(HttpTransport.Cookies cookies) { http = new HttpTransport(cookies); }
     public VideoInfo resolve(String input) throws Exception {
         String share = LinkTools.extract(input);
-        HttpTransport.Response response = http.get(share, HttpTransport.MOBILE_UA);
-        String id = LinkTools.videoId(response.finalUrl);
-        VideoInfo result = PageParser.parse(response.body, id);
-        if (result != null) { result.source = share; return result; }
+        String id = LinkTools.videoId(share);
+        HttpTransport.Response response;
+        VideoInfo result;
+        VideoInfo fallback = null;
+        try {
+            response = http.get(share, HttpTransport.MOBILE_UA);
+            String redirected = LinkTools.videoId(response.finalUrl);
+            if (!redirected.isEmpty()) id = redirected;
+            result = PageParser.parse(response.body, id);
+            if (result != null) {
+                result.source = share;
+                if (result.items.isEmpty()) return result;
+                fallback = result;
+            }
+        } catch (IOException e) { if (id.isEmpty()) throw e; }
         Set<String> pages = new LinkedHashSet<>();
         if (!id.isEmpty()) {
+            pages.add("https://api.amemv.com/aweme/v1/aweme/detail/?aweme_id=" + id + "&aid=6383&device_platform=web&version_code=190500&version_name=19.5.0");
+            pages.add("https://www.iesdouyin.com/share/note/" + id + "/");
             pages.add("https://www.iesdouyin.com/share/video/" + id + "/");
             pages.add("https://www.douyin.com/aweme/v1/web/aweme/detail/?aweme_id=" + id);
         }
         for (String page : pages) {
             try {
-                response = http.get(page, page.contains("/aweme/") ? HttpTransport.DESKTOP_UA : HttpTransport.MOBILE_UA);
+                response = http.get(page, page.startsWith("https://www.douyin.com/aweme/") ? HttpTransport.DESKTOP_UA : HttpTransport.MOBILE_UA);
                 result = PageParser.parse(response.body, id);
-                if (result != null) { result.source = share; return result; }
+                if (result != null) {
+                    result.source = share;
+                    if (fallback == null || result.mediaItems().size() >= fallback.mediaItems().size()) return result;
+                }
             } catch (IOException ignored) { }
         }
-        throw new IOException("页面没有返回可下载的播放资源。请在内置网页中完成验证或播放视频，再点“读取当前页面”。");
+        if (fallback != null) return fallback;
+        throw new IOException("页面没有返回可下载的图片或播放资源。请在内置网页中完成验证或播放实况，再点“读取当前页面”。");
     }
     public VideoInfo cloudResolve(String input, String apiKey) throws Exception {
         String share = LinkTools.extract(input);
