@@ -2,7 +2,7 @@
 
 基于 [Lin6932271/Douyin-video-watermark-remover-downloader](https://github.com/Lin6932271/Douyin-video-watermark-remover-downloader) 的本地增强版。基线提交：`92318e760b19a3718645ef405cf7b4c888ed14b3`。本次修改未推送到 GitHub 或发布到 Releases。
 
-**由 OpenAI Codex 开发。** 支持公开作品的视频、图片、动图和实况素材，不添加水印、不重编码，也不是擦除画面内水印的算法。
+** 支持公开作品的视频、图片、动图和实况素材，不添加水印、不重编码，也不是擦除画面内水印的算法。
 
 ## 交付
 
